@@ -1,0 +1,127 @@
+; MA_Channel_RSI_EA_v3 - OPTIMALIZÁLT BEÁLLÍTÁSOK
+; Verzió: 3.30 - Bug fixek és trailing optimalizálás
+; Dátum: 2024-11-24
+; FONTOS: Ez a konfiguráció javítja a korábbi problémákat:
+;   1. BUY order paraméter sorrend bug JAVÍTVA
+;   2. Trailing stop túl korai aktiválás JAVÍTVA
+;   3. Break-even túl korán aktiválódott JAVÍTVA
+;   4. Risk:Reward arány optimalizálva
+
+; ═══════════════════════════════════════════════════════════════════
+; ÁLTALÁNOS BEÁLLÍTÁSOK
+; ═══════════════════════════════════════════════════════════════════
+MagicNumber=202412
+UseFixedLot=true
+FixedLotSize=0.1
+RiskPerTrade=1.0
+MaxDailyTrades=5
+MaxConcurrentTrades=3
+
+; ═══════════════════════════════════════════════════════════════════
+; RISK MANAGEMENT - AKTÍV VÉDELEM
+; ═══════════════════════════════════════════════════════════════════
+MaxDailyRisk=3.0
+MaxDrawdownLimit=15.0
+UseEquityStop=true
+EquityStopLevel=8.0
+
+; ═══════════════════════════════════════════════════════════════════
+; MOZGÓÁTLAG BEÁLLÍTÁSOK
+; ═══════════════════════════════════════════════════════════════════
+MA_Period=20
+MA_Method=0
+MA_Shift=0
+
+; ═══════════════════════════════════════════════════════════════════
+; RSI BEÁLLÍTÁSOK
+; ═══════════════════════════════════════════════════════════════════
+RSI_Period=14
+RSI_Applied=1
+RSI_LevelBuy=50.0
+RSI_LevelSell=50.0
+RSI_Overbought=70.0
+RSI_Oversold=30.0
+
+; ═══════════════════════════════════════════════════════════════════
+; BELÉPÉSI BEÁLLÍTÁSOK
+; ═══════════════════════════════════════════════════════════════════
+EntryOffset=2
+UseH1TrendFilter=true
+
+; ═══════════════════════════════════════════════════════════════════
+; STOP LOSS BEÁLLÍTÁSOK
+; ═══════════════════════════════════════════════════════════════════
+UseFixedSL=true
+FixedSL_Pips=50
+UseATR_SL=false
+ATR_SL_Multiplier=2.0
+
+; ═══════════════════════════════════════════════════════════════════
+; TAKE PROFIT BEÁLLÍTÁSOK - FIX TP AJÁNLOTT!
+; ═══════════════════════════════════════════════════════════════════
+UseFixedTP=true
+FixedTP_Pips=75
+UseRiskReward=false
+RiskRewardRatio=1.5
+MaxTP_Pips=150
+
+; ═══════════════════════════════════════════════════════════════════
+; BREAK-EVEN BEÁLLÍTÁSOK - OPTIMALIZÁLT
+; Korábban: Trigger=20, Profit=3 (túl korán aktiválódott)
+; Most: Trigger=30, Profit=8 (több profitot enged futni)
+; ═══════════════════════════════════════════════════════════════════
+UseBreakEven=true
+BreakEvenTrigger=30
+BreakEvenProfit=8
+
+; ═══════════════════════════════════════════════════════════════════
+; TRAILING STOP BEÁLLÍTÁSOK - OPTIMALIZÁLT
+; ═══════════════════════════════════════════════════════════════════
+UseTrailingStop=true
+TrailingMode=3
+
+; ALAP TRAILING (TRAIL_BASIC=1) - OPTIMALIZÁLT
+; Korábban: Start=15, Step=5, Distance=15 (túl korán és szorosan)
+; Most: Start=35, Step=8, Distance=25 (több profitot enged)
+TrailingStart=35
+TrailingStep=8
+TrailingDistance=25
+
+; LÉPCSŐS TRAILING (TRAIL_STEPPED=2) - OPTIMALIZÁLT
+; Korábban: L1=15/15, L2=30/12, L3=50/10, L4=75/8
+; Most: L1=30/25, L2=45/20, L3=60/15, L4=80/12
+Trail_Level1_Start=30
+Trail_Level1_Distance=25
+Trail_Level2_Start=45
+Trail_Level2_Distance=20
+Trail_Level3_Start=60
+Trail_Level3_Distance=15
+Trail_Level4_Start=80
+Trail_Level4_Distance=12
+
+; DINAMIKUS TRAILING (TRAIL_DYNAMIC=3) - OPTIMALIZÁLT
+UseRSI_Acceleration=true
+UseVolatility_Adjust=true
+Trail_ATR_Multiplier=1.5
+
+; PROFIT VÉDELEM - OPTIMALIZÁLT
+; Korábban: 50%=30pip, 75%=50pip, 90%=75pip
+; Most: 50%=40pip, 75%=60pip, 90%=80pip (nagyobb profitszintek)
+SecureProfit_50=40
+SecureProfit_75=60
+SecureProfit_90=80
+
+; ═══════════════════════════════════════════════════════════════════
+; IDŐZÍTÉS
+; ═══════════════════════════════════════════════════════════════════
+UseTimeFilter=true
+StartHour=8
+EndHour=20
+
+; ═══════════════════════════════════════════════════════════════════
+; MONITORING
+; ═══════════════════════════════════════════════════════════════════
+EnableLogging=true
+ShowDashboard=true
+AlertOnTP=true
+AlertOnSL=false
