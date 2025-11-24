@@ -60,8 +60,8 @@ input int      MaxTP_Pips         = 150;           // Maximum TP limit (pip)
 
 input group "═══ Break-Even Beállítások ═══"
 input bool     UseBreakEven       = true;          // Break-even használata
-input int      BreakEvenTrigger   = 20;            // BE aktiválási szint (pip)
-input int      BreakEvenProfit    = 3;             // BE profit biztosítás (pip)
+input int      BreakEvenTrigger   = 30;            // BE aktiválási szint (pip) - FIXED: korábban 20
+input int      BreakEvenProfit    = 8;             // BE profit biztosítás (pip) - FIXED: korábban 3
 
 //--- Enum a trailing módokhoz (INPUT ELŐTT kell lennie!)
 //--- Enum a trailing módokhoz (INPUT ELŐTT kell lennie!)
@@ -78,30 +78,30 @@ input group "═══ ADVANCED Trailing Stop ═══"
 input bool     UseTrailingStop    = true;          // Trailing stop használata
 input ENUM_TRAILING_MODE TrailingMode = TRAIL_DYNAMIC; // Trailing mód
 
-// Alap Trailing (TRAIL_BASIC)
-input int      TrailingStart      = 15;            // Trailing kezdete (pip)
-input int      TrailingStep       = 5;             // Trailing lépés (pip)
-input int      TrailingDistance   = 15;            // Trailing távolság (pip)
+// Alap Trailing (TRAIL_BASIC) - OPTIMALIZÁLT: később aktiválódik, több profitot enged!
+input int      TrailingStart      = 35;            // Trailing kezdete (pip) - FIXED: korábban 15 volt!
+input int      TrailingStep       = 8;             // Trailing lépés (pip) - FIXED: korábban 5 volt!
+input int      TrailingDistance   = 25;            // Trailing távolság (pip) - FIXED: korábban 15 volt!
 
-// Lépcsős Trailing (TRAIL_STEPPED)
-input int      Trail_Level1_Start = 15;            // 1. szint kezdete (pip)
-input int      Trail_Level1_Distance = 15;         // 1. szint távolság (pip)
-input int      Trail_Level2_Start = 30;            // 2. szint kezdete (pip)
-input int      Trail_Level2_Distance = 12;         // 2. szint távolság (pip)
-input int      Trail_Level3_Start = 50;            // 3. szint kezdete (pip)
-input int      Trail_Level3_Distance = 10;         // 3. szint távolság (pip)
-input int      Trail_Level4_Start = 75;            // 4. szint kezdete (pip)
-input int      Trail_Level4_Distance = 8;          // 4. szint távolság (pip)
+// Lépcsős Trailing (TRAIL_STEPPED) - OPTIMALIZÁLT: nagyobb távolságok a korai kilépés elkerülésére
+input int      Trail_Level1_Start = 30;            // 1. szint kezdete (pip) - FIXED: korábban 15
+input int      Trail_Level1_Distance = 25;         // 1. szint távolság (pip) - FIXED: korábban 15
+input int      Trail_Level2_Start = 45;            // 2. szint kezdete (pip) - FIXED: korábban 30
+input int      Trail_Level2_Distance = 20;         // 2. szint távolság (pip) - FIXED: korábban 12
+input int      Trail_Level3_Start = 60;            // 3. szint kezdete (pip) - FIXED: korábban 50
+input int      Trail_Level3_Distance = 15;         // 3. szint távolság (pip) - FIXED: korábban 10
+input int      Trail_Level4_Start = 80;            // 4. szint kezdete (pip) - FIXED: korábban 75
+input int      Trail_Level4_Distance = 12;         // 4. szint távolság (pip) - FIXED: korábban 8
 
 // Dinamikus Trailing (TRAIL_DYNAMIC)
 input bool     UseRSI_Acceleration = true;         // RSI alapú gyorsítás
 input bool     UseVolatility_Adjust = true;        // Volatilitás alapú állítás
 input double   Trail_ATR_Multiplier = 1.5;         // ATR szorzó trail távolsághoz
 
-// Profit Védelem
-input int      SecureProfit_50    = 30;            // 50% profit védelem (pip)
-input int      SecureProfit_75    = 50;            // 75% profit védelem (pip)
-input int      SecureProfit_90    = 75;            // 90% profit védelem (pip)
+// Profit Védelem - OPTIMALIZÁLT: reálisabb szintek
+input int      SecureProfit_50    = 40;            // 50% profit védelem (pip) - FIXED: korábban 30
+input int      SecureProfit_75    = 60;            // 75% profit védelem (pip) - FIXED: korábban 50
+input int      SecureProfit_90    = 80;            // 90% profit védelem (pip) - FIXED: korábban 75
 
 
 input group "═══ Időzítés ═══"
@@ -862,79 +862,80 @@ void ApplySteppedTrailing(ulong ticket, double profitPips)
 //+------------------------------------------------------------------+
 void ApplyDynamicTrailing(ulong ticket, double profitPips)
 {
+    // FIXED: TrailingStart növelve 35-re az input-ban, így később aktiválódik
     if(profitPips < TrailingStart) return;
-    
+
     position.SelectByTicket(ticket);
     double currentPrice = position.PriceCurrent();
     double currentSL = position.StopLoss();
     double openPrice = position.PriceOpen();
     double pipValue = GetPipValue();
-    
+
     //--- ATR érték
     if(CopyBuffer(handleATR, 0, 0, 1, atr_buffer) <= 0) return;
     double atr = atr_buffer[0];
-    
+
     //--- RSI érték
     if(CopyBuffer(handleRSI, 0, 0, 1, rsi_buffer) <= 0) return;
     double rsi = rsi_buffer[0];
-    
-    //--- Dinamikus távolság számítása
-    double baseDistance = TrailingDistance;
+
+    //--- Dinamikus távolság számítása - OPTIMALIZÁLT
+    double baseDistance = TrailingDistance;  // Most 25 pip az input-ban
     double dynamicDistance = baseDistance;
-    
-    // ATR alapú módosítás
+
+    // ATR alapú módosítás - FIXED: lazább határok
     if(UseVolatility_Adjust)
     {
         dynamicDistance = atr * Trail_ATR_Multiplier / pipValue;
-        dynamicDistance = MathMax(10, MathMin(50, dynamicDistance)); // 10-50 pip között
+        dynamicDistance = MathMax(15, MathMin(60, dynamicDistance)); // FIXED: 15-60 pip között (korábban 10-50)
     }
-    
-    // RSI alapú gyorsítás
+
+    // RSI alapú gyorsítás - FIXED: kevésbé agresszív
     if(UseRSI_Acceleration)
     {
         if(position.PositionType() == POSITION_TYPE_BUY)
         {
             if(rsi > RSI_Overbought)
-                dynamicDistance *= 0.7; // Szorosabb trailing ha túlvett
+                dynamicDistance *= 0.8; // FIXED: korábban 0.7 - kevésbé szoros
             else if(rsi < 50)
-                dynamicDistance *= 1.3; // Lazább trailing ha gyengül
+                dynamicDistance *= 1.2; // FIXED: korábban 1.3 - kevésbé laza
         }
         else // SELL
         {
             if(rsi < RSI_Oversold)
-                dynamicDistance *= 0.7; // Szorosabb trailing ha túladott
+                dynamicDistance *= 0.8; // FIXED: korábban 0.7
             else if(rsi > 50)
-                dynamicDistance *= 1.3; // Lazább trailing ha gyengül
+                dynamicDistance *= 1.2; // FIXED: korábban 1.3
         }
     }
-    
-    // Profit alapú szorzó
+
+    // Profit alapú szorzó - FIXED: kevésbé agresszív szorosítás
     double profitMultiplier = 1.0;
     if(profitPips > 100)
-        profitMultiplier = 0.5; // Nagyon szoros 100 pip felett
-    else if(profitPips > 50)
-        profitMultiplier = 0.7; // Szoros 50 pip felett
-    else if(profitPips > 30)
-        profitMultiplier = 0.85; // Közepes 30 pip felett
-    
+        profitMultiplier = 0.65; // FIXED: korábban 0.5 - kevésbé szoros
+    else if(profitPips > 60)
+        profitMultiplier = 0.75; // FIXED: korábban 0.7 50 pip-nél
+    else if(profitPips > 40)
+        profitMultiplier = 0.85; // FIXED: korábban 0.85 30 pip-nél
+
     dynamicDistance *= profitMultiplier;
-    dynamicDistance = MathMax(8, dynamicDistance); // Minimum 8 pip
-    
+    dynamicDistance = MathMax(12, dynamicDistance); // FIXED: Minimum 12 pip (korábban 8)
+
     //--- SL módosítás
     double newSL = 0;
     if(position.PositionType() == POSITION_TYPE_BUY)
     {
         newSL = currentPrice - dynamicDistance * pipValue;
-        
-        // Minimum profit védelem
-        double minProtect = openPrice + MathMax(3, profitPips * 0.3) * pipValue;
+
+        // Minimum profit védelem - FIXED: nagyobb védelem
+        double minProtect = openPrice + MathMax(8, profitPips * 0.4) * pipValue;  // FIXED: 8 pip min (korábban 3), 40% (korábban 30%)
         if(newSL < minProtect) newSL = minProtect;
-        
+
         if(newSL > currentSL + TrailingStep * pipValue)
         {
             if(trade.PositionModify(ticket, newSL, position.TakeProfit()))
             {
-                WriteLog(StringFormat("Dynamic Trail BUY: Profit=%.1f pips, Distance=%.1f pips, RSI=%.1f, ATR=%.5f", 
+                WriteLog(StringFormat("Dynamic Trail BUY: Profit=%.1f pips, Distance=%.1f pips, RSI=%.1f, ATR=%.5f",
                         profitPips, dynamicDistance, rsi, atr));
             }
         }
@@ -942,16 +943,16 @@ void ApplyDynamicTrailing(ulong ticket, double profitPips)
     else // SELL
     {
         newSL = currentPrice + dynamicDistance * pipValue;
-        
-        // Minimum profit védelem
-        double minProtect = openPrice - MathMax(3, profitPips * 0.3) * pipValue;
+
+        // Minimum profit védelem - FIXED: nagyobb védelem
+        double minProtect = openPrice - MathMax(8, profitPips * 0.4) * pipValue;  // FIXED: 8 pip min (korábban 3), 40% (korábban 30%)
         if(newSL > minProtect) newSL = minProtect;
-        
+
         if(newSL < currentSL - TrailingStep * pipValue || currentSL == 0)
         {
             if(trade.PositionModify(ticket, newSL, position.TakeProfit()))
             {
-                WriteLog(StringFormat("Dynamic Trail SELL: Profit=%.1f pips, Distance=%.1f pips, RSI=%.1f, ATR=%.5f", 
+                WriteLog(StringFormat("Dynamic Trail SELL: Profit=%.1f pips, Distance=%.1f pips, RSI=%.1f, ATR=%.5f",
                         profitPips, dynamicDistance, rsi, atr));
             }
         }
@@ -961,37 +962,38 @@ void ApplyDynamicTrailing(ulong ticket, double profitPips)
 
 //+------------------------------------------------------------------+
 //| Aggressive Trailing (Agresszív - maximális profit védelem)       |
+//| FIXED: Később aktiválódik, kevésbé szoros távolságok            |
 //+------------------------------------------------------------------+
 void ApplyAggressiveTrailing(ulong ticket, double profitPips)
 {
-    if(profitPips < 10) return; // 10 pip-től indul
-    
+    if(profitPips < 25) return; // FIXED: 25 pip-től indul (korábban 10)
+
     position.SelectByTicket(ticket);
     double currentPrice = position.PriceCurrent();
     double currentSL = position.StopLoss();
     double openPrice = position.PriceOpen();
     double pipValue = GetPipValue();
-    
-    //--- Agresszív távolság: minél nagyobb a profit, annál szorosabb
-    double trailDistance = MathMax(5, 20 - profitPips/10); // 5-20 pip között
-    
-    //--- Garantált profit
-    double guaranteedProfit = profitPips * 0.8; // 80% profit védelem
-    
+
+    //--- Agresszív távolság - FIXED: nagyobb távolságok
+    double trailDistance = MathMax(10, 30 - profitPips/8); // FIXED: 10-30 pip között (korábban 5-20)
+
+    //--- Garantált profit - FIXED: 65% (korábban 80% túl agresszív volt)
+    double guaranteedProfit = profitPips * 0.65; // FIXED: 65% profit védelem
+
     double newSL = 0;
     if(position.PositionType() == POSITION_TYPE_BUY)
     {
         newSL = currentPrice - trailDistance * pipValue;
-        
+
         // Garantált profit SL
         double guaranteedSL = openPrice + guaranteedProfit * pipValue;
         if(guaranteedSL > newSL) newSL = guaranteedSL;
-        
-        if(newSL > currentSL + 2 * pipValue) // Agresszív: 2 pip lépés
+
+        if(newSL > currentSL + 4 * pipValue) // FIXED: 4 pip lépés (korábban 2)
         {
             if(trade.PositionModify(ticket, newSL, position.TakeProfit()))
             {
-                WriteLog(StringFormat("AGGRESSIVE Trail BUY: Profit=%.1f pips, Distance=%.1f, Guaranteed=%.1f pips", 
+                WriteLog(StringFormat("AGGRESSIVE Trail BUY: Profit=%.1f pips, Distance=%.1f, Guaranteed=%.1f pips",
                         profitPips, trailDistance, guaranteedProfit));
             }
         }
@@ -999,16 +1001,16 @@ void ApplyAggressiveTrailing(ulong ticket, double profitPips)
     else // SELL
     {
         newSL = currentPrice + trailDistance * pipValue;
-        
+
         // Garantált profit SL
         double guaranteedSL = openPrice - guaranteedProfit * pipValue;
         if(guaranteedSL < newSL) newSL = guaranteedSL;
-        
-        if(newSL < currentSL - 2 * pipValue || currentSL == 0)
+
+        if(newSL < currentSL - 4 * pipValue || currentSL == 0) // FIXED: 4 pip lépés (korábban 2)
         {
             if(trade.PositionModify(ticket, newSL, position.TakeProfit()))
             {
-                WriteLog(StringFormat("AGGRESSIVE Trail SELL: Profit=%.1f pips, Distance=%.1f, Guaranteed=%.1f pips", 
+                WriteLog(StringFormat("AGGRESSIVE Trail SELL: Profit=%.1f pips, Distance=%.1f, Guaranteed=%.1f pips",
                         profitPips, trailDistance, guaranteedProfit));
             }
         }
@@ -1123,7 +1125,7 @@ void CheckBuySignal()
         double entryPrice = high1 + EntryOffset * GetPipValue();
         double sl = CalculateStopLoss(ORDER_TYPE_BUY, low1);
         double tp = CalculateTakeProfit(ORDER_TYPE_BUY, entryPrice, sl);
-        double lotSize = CalculateLotSize(sl, entryPrice);
+        double lotSize = CalculateLotSize(entryPrice, sl);  // FIXED: paraméter sorrend javítva
         
         // DEBUG info
         double tpPips = (tp - entryPrice) / GetPipValue();
