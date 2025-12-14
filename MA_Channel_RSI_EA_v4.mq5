@@ -31,9 +31,6 @@ input int      EntryOffset        = 2;
 //=== STOP LOSS ===
 input int      StopLoss_Pips      = 50;
 
-//=== TAKE PROFIT ===
-input int      TakeProfit_Pips    = 150;
-
 //=== BREAK EVEN ===
 input bool     UseBreakEven       = true;
 input int      BE_TriggerPips     = 30;
@@ -41,9 +38,9 @@ input int      BE_LockPips        = 5;
 
 //=== TRAILING STOP ===
 input bool     UseTrailing        = true;
-input int      TrailStartPips     = 40;
-input int      TrailDistancePips  = 25;
-input int      TrailStepPips      = 5;
+input int      TrailStartPips     = 60;
+input int      TrailDistancePips  = 50;
+input int      TrailStepPips      = 10;
 
 //=== TIME FILTER ===
 input bool     UseTimeFilter      = true;
@@ -116,7 +113,7 @@ int OnInit()
     ArraySetAsSeries(maLowH1, true);
     ArraySetAsSeries(atr, true);
 
-    Print("EA v4 initialized | SL:", StopLoss_Pips, " TP:", TakeProfit_Pips,
+    Print("EA v4 initialized | SL:", StopLoss_Pips,
           " Trail:", TrailStartPips, "/", TrailDistancePips);
 
     return INIT_SUCCEEDED;
@@ -222,9 +219,8 @@ void CheckBuySignal()
         double pip = GetPipValue();
         double entry = high1 + EntryOffset * pip;
         double sl = entry - StopLoss_Pips * pip;
-        double tp = entry + TakeProfit_Pips * pip;
 
-        if(trade.BuyStop(LotSize, entry, Symbol(), sl, tp, ORDER_TIME_DAY, 0, "MA_Buy"))
+        if(trade.BuyStop(LotSize, entry, Symbol(), sl, 0, ORDER_TIME_DAY, 0, "MA_Buy"))
         {
             dailyTrades++;
             Log("BUY STOP @ " + DoubleToString(entry, _Digits));
@@ -260,9 +256,8 @@ void CheckSellSignal()
         double pip = GetPipValue();
         double entry = low1 - EntryOffset * pip;
         double sl = entry + StopLoss_Pips * pip;
-        double tp = entry - TakeProfit_Pips * pip;
 
-        if(trade.SellStop(LotSize, entry, Symbol(), sl, tp, ORDER_TIME_DAY, 0, "MA_Sell"))
+        if(trade.SellStop(LotSize, entry, Symbol(), sl, 0, ORDER_TIME_DAY, 0, "MA_Sell"))
         {
             dailyTrades++;
             Log("SELL STOP @ " + DoubleToString(entry, _Digits));
