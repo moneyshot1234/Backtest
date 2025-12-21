@@ -1,10 +1,10 @@
 //+------------------------------------------------------------------+
-//|                                       MA_Channel_RSI_EA_v5.1.mq5 |
-//|                              + Dynamic Position Sizing ONLY      |
-//|                                        Version 5.1 - MINIMAL     |
+//|                                         MA_Channel_RSI_EA_v7.mq5 |
+//|                              + Dynamic Position Sizing           |
+//|                                        Version 7.0               |
 //+------------------------------------------------------------------+
-#property copyright "MA Channel RSI EA v5.1"
-#property version   "5.10"
+#property copyright "MA Channel RSI EA v7"
+#property version   "7.00"
 #property strict
 
 #include <Trade\Trade.mqh>
@@ -174,7 +174,7 @@ int OnInit()
     ArraySetAsSeries(maLowH1, true);
     ArraySetAsSeries(atr, true);
 
-    Print("EA v5.1 initialized | Risk:", RiskPercent, "% | SL:", StopLoss_Pips,
+    Print("EA v7 initialized | Risk:", RiskPercent, "% | SL:", StopLoss_Pips,
           " | Trail:", TrailStartPips, "/", TrailDistancePips);
 
     return INIT_SUCCEEDED;
@@ -208,7 +208,7 @@ void OnDeinit(const int reason)
     }
 
     double finalBalance = AccountInfoDouble(ACCOUNT_BALANCE);
-    Print("EA v5.1 stopped | P/L: ", DoubleToString(finalBalance - startBalance, 2));
+    Print("EA v7 stopped | P/L: ", DoubleToString(finalBalance - startBalance, 2));
 }
 
 //+------------------------------------------------------------------+
